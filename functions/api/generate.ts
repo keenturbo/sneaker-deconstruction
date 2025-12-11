@@ -112,14 +112,14 @@ Analyze the uploaded sneaker photo, preserve its colorway and materials, then re
 
 export const onRequestPost: RequestHandler = async ({ request, env }) => {
   try {
-    const { image_base64, shoe_name } = await request.json<any>();
+    const { image_base64, shoe_name, custom_key } = await request.json<any>();
     if (!image_base64 || typeof image_base64 !== "string" || !image_base64.trim()) {
       return new Response(JSON.stringify({ error: "缺少必填参数 image_base64" }), { status: 400 });
     }
 
-    const apiKey = env.GEMINI_API_KEY;
+    const apiKey = (custom_key && typeof custom_key === "string" && custom_key.trim()) || env.GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "缺少 GEMINI_API_KEY" }), { status: 500 });
+      return new Response(JSON.stringify({ error: "缺少 GEMINI_API_KEY 或自定义 Key" }), { status: 500 });
     }
 
     const model = env.AI_MODEL_NAME || DEFAULT_MODEL;
