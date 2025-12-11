@@ -117,23 +117,23 @@
   <div class="page">
     <header>
       <div>
-        <h1>解构式球鞋分层图</h1>
-        <p class="lead">上传球鞋照片，生成纯黑背景的垂直爆炸/分层视图，突出材料、支撑与缓震结构。</p>
+        <h1>解构式球/跑鞋分层图</h1>
+        <p class="lead">上传球/跑鞋照片，生成纯黑背景的垂直爆炸/分层视图，突出材料、支撑与缓震结构。</p>
       </div>
     </header>
 
     <div class="layout">
       <div class="card card-strong">
-        <div class="section-title"><span class="dot"></span><span>上传球鞋照片</span></div>
+        <div class="section-title"><span class="dot"></span><span>上传球/跑鞋照片</span></div>
         <form id="generate-form">
           <div>
             <label for="shoe-name">鞋名/备注（可选）</label>
             <input id="shoe-name" name="shoe_name" type="text" placeholder="例：Air Max 1 Industrial" />
           </div>
           <div>
-            <label for="image-input">球鞋图片</label>
+            <label for="image-input">球/跑鞋图片</label>
             <div class="file-row">
-              <label class="file-trigger" for="image-input"><span class="dot"></span><span>选取球鞋照片</span></label>
+              <label class="file-trigger" for="image-input"><span class="dot"></span><span>选取球/跑鞋照片</span></label>
               <span id="file-hint" class="muted">支持常见图片格式，建议正侧面清晰照。</span>
             </div>
             <input id="image-input" class="file-input" name="image" type="file" accept="image/*" required />
@@ -153,7 +153,7 @@
           <div class="state" id="result-state">未生成</div>
         </div>
         <div class="result">
-          <img id="result-image" class="hidden" alt="生成的球鞋分层图" />
+          <img id="result-image" class="hidden" alt="生成的球/跑鞋分层图" />
           <div class="actions hidden" id="result-actions">
             <button class="primary" type="button" id="download-btn">下载图片</button>
             <button class="ghost-btn" type="button" id="retry-btn">再生成一次</button>
@@ -260,7 +260,7 @@
     }
 
     async function generatePoster(imageBase64, shoeName) {
-      statusText.textContent = '正在解构球鞋...';
+      statusText.textContent = '正在解构球/跑鞋...';
       resultState.textContent = '生成中...';
       submitBtn.disabled = true;
       resetResult();
