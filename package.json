@@ -1,0 +1,10 @@
+{
+  "name": "sneaker-deconstruction",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {},
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241205.0",
+    "typescript": "^5.6.3"
+  }
+}
