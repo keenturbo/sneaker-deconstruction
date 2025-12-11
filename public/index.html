@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>解构式球鞋分层图</title>
+  <style>
+    :root {
+      --bg: #050507;
+      --card: rgba(255, 255, 255, 0.04);
+      --card-strong: rgba(255, 255, 255, 0.08);
+      --accent: #7fffd4;
+      --accent-2: #3fe6b0;
+      --muted: #9aa0b5;
+      --text: #f7f7fb;
+      --border: rgba(255, 255, 255, 0.12);
+      --sample: url('https://sneaker.snippet.pp.ua/sample-1.jpeg');
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Space Grotesk", "Noto Sans SC", "Inter", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(127, 255, 212, 0.12), transparent 30%),
+                  radial-gradient(circle at 80% 0%, rgba(63, 230, 176, 0.14), transparent 28%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .page { max-width: 1400px; margin: 0 auto; padding: 28px 18px 48px; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+    h1 { margin: 8px 0 6px; font-size: 28px; letter-spacing: -0.4px; }
+    p.lead { margin: 0; color: var(--muted); max-width: 780px; line-height: 1.6; }
+    .layout { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 18px; align-items: start; }
+    @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(6px); box-shadow: 0 18px 40px rgba(0,0,0,0.25); }
+    .card-strong { background: var(--card-strong); border: 1px solid rgba(255,255,255,0.16); }
+    .section-title { display: flex; align-items: center; gap: 10px; font-size: 16px; margin: 0 0 10px; letter-spacing: 0.2px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); flex-shrink: 0; }
+
+    form { display: flex; flex-direction: column; gap: 14px; }
+    label { font-size: 13px; color: var(--muted); }
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      font-size: 15px;
+    }
+    input[type="text"]:focus, input[type="file"]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+    button.primary {
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0a0b0f;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+    button.primary:active { transform: translateY(1px); box-shadow: inset 0 2px 6px rgba(0,0,0,0.25); }
+    button[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+    .status { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; }
+    .dotping { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(127,255,212,0.5); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(127,255,212,0.6); } 70% { box-shadow: 0 0 0 12px rgba(127,255,212,0); } 100% { box-shadow: 0 0 0 0 rgba(127,255,212,0); } }
+
+    .result-panel { position: relative; min-height: 1400px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #050505; display: grid; grid-template-rows: auto 1fr auto; padding: 14px; }
+    @media (max-width: 980px) { .result-panel { min-height: 95vh; } }
+    .result-panel::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.8) 100%), var(--sample) center/contain no-repeat; filter: saturate(0.9); z-index: 0; }
+    .result { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr; align-items: center; justify-items: center; gap: 12px; align-content: start; }
+    .result img { width: 100%; max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border); background: #0b0c12; object-fit: contain; }
+    .hidden { display: none !important; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .ghost-btn { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
+    .result-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 16px; margin: 0 0 10px; letter-spacing: 0.2px; position: relative; z-index: 1; }
+    .result-title { display: inline-flex; align-items: center; gap: 10px; font-size: 16px; letter-spacing: 0.2px; }
+    .state { font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+
+    .counter { font-size: 12px; color: var(--muted); }
+    .preview { display: flex; gap: 12px; align-items: center; }
+    .thumb { width: 96px; height: 96px; border: 1px solid var(--border); border-radius: 12px; object-fit: cover; background: #0b0c12; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 18px; }
+    .modal { background: #0b0c12; border: 1px solid var(--border); border-radius: 16px; padding: 20px; max-width: 420px; width: 100%; color: var(--text); box-shadow: 0 18px 40px rgba(0,0,0,0.35); }
+    .modal h3 { margin: 0 0 8px; font-size: 20px; }
+    .modal p { margin: 0 0 12px; color: var(--muted); line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-secondary { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text); cursor: pointer; flex: 1; text-align: center; text-decoration: none; }
+    .qr { width: 140px; height: 140px; border-radius: 12px; border: 1px solid var(--border); background: #0f0f12; object-fit: contain; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>解构式球鞋分层图</h1>
+        <p class="lead">上传球鞋照片，生成纯黑背景的垂直爆炸/分层视图，突出材料、支撑与缓震结构。</p>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div class="card card-strong">
+        <div class="section-title"><span class="dot"></span><span>上传球鞋照片</span></div>
+        <form id="generate-form">
+          <div>
+            <label for="shoe-name">鞋名/备注（可选）</label>
+            <input id="shoe-name" name="shoe_name" type="text" placeholder="例：Air Max 1 Industrial" />
+          </div>
+          <div>
+            <label for="image-input">球鞋图片</label>
+            <input id="image-input" name="image" type="file" accept="image/*" required />
+          </div>
+          <div class="preview">
+            <img id="thumb" class="thumb hidden" alt="预览" />
+            <span id="file-hint" class="muted">支持常见图片格式，建议正侧面清晰照。</span>
+          </div>
+          <button class="primary" type="submit" id="submit-btn">生成分层图</button>
+          <div class="counter" id="limit-counter">今日剩余：3/3</div>
+          <div class="status" id="status-row"><span class="dotping"></span><span id="status-text">等待上传...</span></div>
+        </form>
+      </div>
+
+      <div class="result-panel">
+        <div class="result-header">
+          <div class="result-title"><span class="dot"></span><span>生成结果</span></div>
+          <div class="state" id="result-state">未生成</div>
+        </div>
+        <div class="result">
+          <img id="result-image" class="hidden" alt="生成的球鞋分层图" />
+          <div class="actions hidden" id="result-actions">
+            <button class="primary" type="button" id="download-btn">下载图片</button>
+            <button class="ghost-btn" type="button" id="retry-btn">再生成一次</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="limit-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3>今日免费额度已用完</h3>
+      <p>每天限 3 次免费生成。可明日再来，或自行部署开源版本，或打赏支持。</p>
+      <div class="modal-actions">
+        <a class="btn-secondary" href="https://github.com/keenturbo/sneaker-deconstruction" target="_blank" rel="noreferrer">GitHub 免费部署</a>
+        <a class="btn-secondary" href="https://pic.snippet.pp.ua/generated/IMG_4859.jpeg" target="_blank" rel="noreferrer">赞赏码</a>
+      </div>
+      <div style="margin-top:12px; display:flex; justify-content:center;">
+        <img class="qr" src="https://pic.snippet.pp.ua/generated/IMG_4859.jpeg" alt="赞赏码" />
+      </div>
+      <div style="margin-top:14px; text-align:right;">
+        <button class="ghost-btn" type="button" onclick="closeLimitModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('generate-form');
+    const shoeInput = document.getElementById('shoe-name');
+    const imageInput = document.getElementById('image-input');
+    const thumb = document.getElementById('thumb');
+    const fileHint = document.getElementById('file-hint');
+    const submitBtn = document.getElementById('submit-btn');
+    const statusText = document.getElementById('status-text');
+    const resultImg = document.getElementById('result-image');
+    const resultActions = document.getElementById('result-actions');
+    const resultState = document.getElementById('result-state');
+    const retryBtn = document.getElementById('retry-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const limitCounter = document.getElementById('limit-counter');
+    const limitModal = document.getElementById('limit-modal');
+
+    const MAX_DAILY_LIMIT = 3;
+
+    const sampleImages = [
+      'https://sneaker.snippet.pp.ua/sample-1.jpeg',
+      'https://sneaker.snippet.pp.ua/sample-2.jpeg',
+      'https://sneaker.snippet.pp.ua/sample-3.jpeg',
+      'https://sneaker.snippet.pp.ua/sample-4.jpeg',
+      'https://sneaker.snippet.pp.ua/sample-5.jpeg',
+      'https://sneaker.snippet.pp.ua/sample-6.jpeg',
+      'https://sneaker.snippet.pp.ua/sample-7.jpeg',
+      'https://sneaker.snippet.pp.ua/sample-8.jpeg',
+      'https://sneaker.snippet.pp.ua/sample-9.jpeg',
+    ];
+    const pick = sampleImages[Math.floor(Math.random() * sampleImages.length)];
+    document.documentElement.style.setProperty('--sample', `url('${pick}')`);
+
+    function getDailyUsage() {
+      const today = new Date().toISOString().split('T')[0];
+      const storedDate = localStorage.getItem('last_usage_date');
+      if (storedDate !== today) {
+        localStorage.setItem('last_usage_date', today);
+        localStorage.setItem('daily_count', '0');
+        return 0;
+      }
+      return parseInt(localStorage.getItem('daily_count') || '0', 10);
+    }
+
+    function incrementUsage() {
+      const count = getDailyUsage();
+      localStorage.setItem('daily_count', String(count + 1));
+      updateCounterUI();
+    }
+
+    function updateCounterUI() {
+      const remaining = Math.max(0, MAX_DAILY_LIMIT - getDailyUsage());
+      limitCounter.textContent = `今日剩余：${remaining}/${MAX_DAILY_LIMIT}`;
+    }
+
+    function showLimitModal() { limitModal.classList.remove('hidden'); }
+    function closeLimitModal() { limitModal.classList.add('hidden'); }
+
+    function resetResult() {
+      resultImg.classList.add('hidden');
+      resultActions.classList.add('hidden');
+      resultImg.src = '';
+    }
+
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const res = reader.result;
+          if (typeof res === 'string') {
+            resolve(res.split(',')[1] || '');
+          } else {
+            reject(new Error('读取文件失败'));
+          }
+        };
+        reader.onerror = () => reject(new Error('读取文件失败'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function generatePoster(imageBase64, shoeName) {
+      statusText.textContent = '正在解构球鞋...';
+      resultState.textContent = '生成中...';
+      submitBtn.disabled = true;
+      resetResult();
+      try {
+        const payload = { image_base64: imageBase64 };
+        if (shoeName) payload.shoe_name = shoeName;
+        const resp = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) throw new Error('生成失败：' + resp.status);
+        const data = await resp.json();
+        if (!data.image_url) throw new Error('未返回图片');
+        resultImg.src = data.image_url;
+        resultImg.classList.remove('hidden');
+        resultActions.classList.remove('hidden');
+        statusText.textContent = '生成完成';
+        resultState.textContent = '生成完成';
+        incrementUsage();
+      } catch (err) {
+        statusText.textContent = '错误：' + err.message;
+        resultState.textContent = '生成失败';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (getDailyUsage() >= MAX_DAILY_LIMIT) { showLimitModal(); return; }
+      const file = imageInput.files?.[0];
+      if (!file) return;
+      const shoeName = shoeInput.value.trim();
+      try {
+        const base64 = await toBase64(file);
+        if (!base64) throw new Error('无法读取图片');
+        thumb.src = URL.createObjectURL(file);
+        thumb.classList.remove('hidden');
+        fileHint.textContent = file.name;
+        await generatePoster(base64, shoeName);
+      } catch (err) {
+        statusText.textContent = '错误：' + err.message;
+        resultState.textContent = '生成失败';
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!resultImg.src) return;
+      const link = document.createElement('a');
+      link.href = resultImg.src;
+      link.download = 'sneaker-deconstruction.png';
+      link.click();
+    });
+
+    retryBtn.addEventListener('click', () => {
+      if (!imageInput.files?.[0]) return;
+      const shoeName = shoeInput.value.trim();
+      const file = imageInput.files[0];
+      toBase64(file).then((base64) => generatePoster(base64, shoeName)).catch((err) => {
+        statusText.textContent = '错误：' + err.message;
+        resultState.textContent = '生成失败';
+      });
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateCounterUI();
+    });
+  </script>
+</body>
+</html>
