@@ -38,10 +38,11 @@
     .card-strong { background: var(--card-strong); border: 1px solid rgba(255,255,255,0.16); }
     .section-title { display: flex; align-items: center; gap: 10px; font-size: 16px; margin: 0 0 10px; letter-spacing: 0.2px; }
     .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); flex-shrink: 0; }
+    .muted { color: var(--muted); font-size: 12px; }
 
     form { display: flex; flex-direction: column; gap: 14px; }
     label { font-size: 13px; color: var(--muted); }
-    input[type="text"] {
+    input[type="text"], input[type="password"] {
       width: 100%;
       padding: 14px;
       border-radius: 12px;
@@ -50,7 +51,7 @@
       color: var(--text);
       font-size: 15px;
     }
-    input[type="text"]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+    input[type="text"]:focus, input[type="password"]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
     .file-input { display: none; }
     .file-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .file-trigger {
@@ -102,6 +103,14 @@
     .state { font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 
     .counter { font-size: 12px; color: var(--muted); }
+    .counter-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between; }
+    .key-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .key-btn { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: linear-gradient(135deg, rgba(127,255,212,0.18), rgba(63,230,176,0.12)); color: var(--text); cursor: pointer; font-weight: 600; letter-spacing: 0.1px; }
+    .key-btn:hover { border-color: var(--accent); box-shadow: 0 8px 18px rgba(127,255,212,0.1); }
+    .key-btn:active { transform: translateY(1px); }
+    .key-status { font-size: 12px; color: var(--muted); padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); }
+    .key-status.active { color: var(--accent); border-color: var(--accent); background: rgba(127,255,212,0.08); }
+
     .preview { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .thumb { width: 96px; height: 96px; border: 1px solid var(--border); border-radius: 12px; object-fit: cover; background: #0b0c12; }
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 18px; }
@@ -142,7 +151,13 @@
             <img id="thumb" class="thumb hidden" alt="预览" />
           </div>
           <button class="primary" type="submit" id="submit-btn">生成分层图</button>
-          <div class="counter" id="limit-counter">今日剩余：3/3</div>
+          <div class="counter-row">
+            <div class="counter" id="limit-counter">今日免费剩余：3/3</div>
+            <div class="key-actions">
+              <span class="key-status" id="key-status">未设置自定义 Key</span>
+              <button class="key-btn" type="button" id="open-key-modal">添加自己的 Key</button>
+            </div>
+          </div>
           <div class="status" id="status-row"><span class="dotping"></span><span id="status-text">等待上传...</span></div>
         </form>
       </div>
@@ -166,8 +181,9 @@
   <div id="limit-modal" class="modal-backdrop hidden">
     <div class="modal">
       <h3>今日免费额度已用完</h3>
-      <p>每天限 3 次免费生成。可明日再来，或自行部署开源版本，或打赏支持。</p>
+      <p>免费 3 次已用尽。可添加自己的付费 Gemini Key（不消耗本站额度），或自行部署开源版本，或打赏支持。</p>
       <div class="modal-actions">
+        <button class="btn-secondary" type="button" id="limit-add-key-btn">添加自定义 Key</button>
         <a class="btn-secondary" href="https://github.com/keenturbo/sneaker-deconstruction" target="_blank" rel="noreferrer">GitHub 免费部署</a>
         <a class="btn-secondary" href="https://pic.snippet.pp.ua/generated/IMG_4859.jpeg" target="_blank" rel="noreferrer">赞赏码</a>
       </div>
@@ -176,6 +192,19 @@
       </div>
       <div style="margin-top:14px; text-align:right;">
         <button class="ghost-btn" type="button" onclick="closeLimitModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="key-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3>添加自定义 Gemini Key</h3>
+      <p>填入你自己的付费层级 Gemini (Google AI Studio) API Key，保存在浏览器本地，仅你可见，优先调用，不消耗本站额度。</p>
+      <input id="key-input" type="password" placeholder="填入支持图像的 Gemini API Key" />
+      <div class="modal-actions">
+        <button class="primary" type="button" id="save-key-btn">保存并使用</button>
+        <button class="btn-secondary" type="button" id="clear-key-btn">清除 Key</button>
+        <button class="ghost-btn" type="button" id="close-key-btn">取消</button>
       </div>
     </div>
   </div>
@@ -195,8 +224,17 @@
     const downloadBtn = document.getElementById('download-btn');
     const limitCounter = document.getElementById('limit-counter');
     const limitModal = document.getElementById('limit-modal');
+    const keyModal = document.getElementById('key-modal');
+    const keyInput = document.getElementById('key-input');
+    const keyStatus = document.getElementById('key-status');
+    const openKeyBtn = document.getElementById('open-key-modal');
+    const saveKeyBtn = document.getElementById('save-key-btn');
+    const clearKeyBtn = document.getElementById('clear-key-btn');
+    const closeKeyBtn = document.getElementById('close-key-btn');
+    const limitAddKeyBtn = document.getElementById('limit-add-key-btn');
 
     const MAX_DAILY_LIMIT = 3;
+    const KEY_STORAGE = 'gemini_user_key';
 
     const sampleImages = [
       'https://sneaker.snippet.pp.ua/sample-1.jpeg',
@@ -231,11 +269,28 @@
 
     function updateCounterUI() {
       const remaining = Math.max(0, MAX_DAILY_LIMIT - getDailyUsage());
-      limitCounter.textContent = `今日剩余：${remaining}/${MAX_DAILY_LIMIT}`;
+      limitCounter.textContent = `今日免费剩余：${remaining}/${MAX_DAILY_LIMIT}`;
+    }
+
+    function getUserKey() {
+      return localStorage.getItem(KEY_STORAGE) || '';
+    }
+
+    function updateKeyStatus() {
+      const key = getUserKey();
+      if (key) {
+        keyStatus.textContent = '已启用自定义 Key';
+        keyStatus.classList.add('active');
+      } else {
+        keyStatus.textContent = '未设置自定义 Key';
+        keyStatus.classList.remove('active');
+      }
     }
 
     function showLimitModal() { limitModal.classList.remove('hidden'); }
     function closeLimitModal() { limitModal.classList.add('hidden'); }
+    function showKeyModal() { keyInput.value = getUserKey(); keyModal.classList.remove('hidden'); }
+    function closeKeyModal() { keyModal.classList.add('hidden'); }
 
     function resetResult() {
       resultImg.classList.add('hidden');
@@ -259,7 +314,7 @@
       });
     }
 
-    async function generatePoster(imageBase64, shoeName) {
+    async function generatePoster(imageBase64, shoeName, userKey) {
       statusText.textContent = '正在解构球/跑鞋...';
       resultState.textContent = '生成中...';
       submitBtn.disabled = true;
@@ -267,6 +322,7 @@
       try {
         const payload = { image_base64: imageBase64 };
         if (shoeName) payload.shoe_name = shoeName;
+        if (userKey) payload.custom_key = userKey;
         const resp = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -280,7 +336,11 @@
         resultActions.classList.remove('hidden');
         statusText.textContent = '生成完成';
         resultState.textContent = '生成完成';
-        incrementUsage();
+        if (!userKey) {
+          incrementUsage();
+        } else {
+          updateCounterUI();
+        }
       } catch (err) {
         statusText.textContent = '错误：' + err.message;
         resultState.textContent = '生成失败';
@@ -291,7 +351,8 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (getDailyUsage() >= MAX_DAILY_LIMIT) { showLimitModal(); return; }
+      const userKey = getUserKey();
+      if (!userKey && getDailyUsage() >= MAX_DAILY_LIMIT) { showLimitModal(); return; }
       const file = imageInput.files?.[0];
       if (!file) return;
       const shoeName = shoeInput.value.trim();
@@ -301,7 +362,7 @@
         thumb.src = URL.createObjectURL(file);
         thumb.classList.remove('hidden');
         fileHint.textContent = file.name;
-        await generatePoster(base64, shoeName);
+        await generatePoster(base64, shoeName, userKey);
       } catch (err) {
         statusText.textContent = '错误：' + err.message;
         resultState.textContent = '生成失败';
@@ -317,17 +378,40 @@
     });
 
     retryBtn.addEventListener('click', () => {
+      const userKey = getUserKey();
       if (!imageInput.files?.[0]) return;
       const shoeName = shoeInput.value.trim();
       const file = imageInput.files[0];
-      toBase64(file).then((base64) => generatePoster(base64, shoeName)).catch((err) => {
+      toBase64(file).then((base64) => generatePoster(base64, shoeName, userKey)).catch((err) => {
         statusText.textContent = '错误：' + err.message;
         resultState.textContent = '生成失败';
       });
     });
 
+    openKeyBtn.addEventListener('click', () => { showKeyModal(); });
+    if (limitAddKeyBtn) { limitAddKeyBtn.addEventListener('click', () => { closeLimitModal(); showKeyModal(); }); }
+    saveKeyBtn.addEventListener('click', () => {
+      const val = keyInput.value.trim();
+      if (val) {
+        localStorage.setItem(KEY_STORAGE, val);
+      }
+      updateKeyStatus();
+      closeKeyModal();
+      updateCounterUI();
+    });
+    clearKeyBtn.addEventListener('click', () => {
+      localStorage.removeItem(KEY_STORAGE);
+      keyInput.value = '';
+      updateKeyStatus();
+      updateCounterUI();
+    });
+    closeKeyBtn.addEventListener('click', () => { closeKeyModal(); });
+
     window.addEventListener('DOMContentLoaded', () => {
       updateCounterUI();
+      updateKeyStatus();
+      const savedKey = getUserKey();
+      if (savedKey) keyInput.value = savedKey;
     });
   </script>
 </body>
