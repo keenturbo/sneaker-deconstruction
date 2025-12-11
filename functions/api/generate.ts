@@ -87,7 +87,7 @@ Analyze the uploaded sneaker photo, preserve its colorway and materials, then re
 - **Layers (Top→Bottom):**
   1) Laces/Tongue/Collar padding
   2) Upper panels & overlays
-  3) Support/heel counter/lining
+  3) lining
   4) Midsole & cushioning system
   5) Outsole with tread pattern
   6) Complete sneaker at bottom
