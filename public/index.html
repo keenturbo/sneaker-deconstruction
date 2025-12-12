@@ -328,7 +328,12 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        if (!resp.ok) throw new Error('生成失败：' + resp.status);
+        if (!resp.ok) {
+          if (resp.status === 500) {
+            throw new Error('服务暂不可用，请点击「添加自己的 Key」填入你的 Gemini API Key 后重试');
+          }
+          throw new Error('生成失败：' + resp.status);
+        }
         const data = await resp.json();
         if (!data.image_url) throw new Error('未返回图片');
         resultImg.src = data.image_url;
